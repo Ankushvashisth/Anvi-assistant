@@ -157,6 +157,15 @@ def handle_connect():
     print('Client connected')
     emit('status_update', {'status': 'Connected'})
 
+@socketio.on('wake_up')
+def handle_wake_up(data):
+    global ASSISTANT_ACTIVE
+    print(f"Wake Up Triggered: {data}")
+    ASSISTANT_ACTIVE = True
+    if assistant:
+        assistant.speak("Hello! I am online.")
+    emit('status_update', {'status': 'Active'})
+
 if __name__ == '__main__':
     print("Starting Main...")
     # Start thread
