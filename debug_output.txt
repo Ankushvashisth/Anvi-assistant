@@ -1,0 +1,16 @@
+--- remote.txt (276 bytes) ---
+origin	https://github.com/Ankushvashisth/Anvi-assistant.git (fetch)
+origin	https://github.com/Ankushvashisth/Anvi-assistant.git (push)
+
+--- status.txt (512 bytes) ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	remote.txt
+	status.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+--- curl_output.txt (0 bytes) ---
