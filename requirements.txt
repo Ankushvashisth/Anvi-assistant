@@ -1,0 +1,10 @@
+SpeechRecognition
+pyttsx3
+pyaudio
+wikipedia
+pyjokes
+opencv-python
+requests
+flask
+flask-socketio
+eventlet
