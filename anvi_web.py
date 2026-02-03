@@ -166,6 +166,29 @@ def handle_wake_up(data):
         assistant.speak("Hello! I am online.")
     emit('status_update', {'status': 'Active'})
 
+@socketio.on('send_command')
+def handle_client_command(data):
+    """
+    Handle text command received from the Web/PWA client.
+    """
+    command = data.get('command')
+    if not command: return
+
+    print(f"Received Remote Command: {command}")
+    
+    # Process the command just like a voice input
+    # We set active true since they pressed the button
+    global ASSISTANT_ACTIVE
+    ASSISTANT_ACTIVE = True 
+    
+    # Send user message back to all clients (so desktop sees what mobile said)
+    emit('user_message', {'data': command})
+
+    # Process
+    if assistant:
+        process_command(command)
+
+
 if __name__ == '__main__':
     print("Starting Main...")
     # Start thread
@@ -174,6 +197,14 @@ if __name__ == '__main__':
     
     # Run server
     try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print("\n" + "*"*50)
+        print(f"MOBILE ACCESS: To use on your phone, connect to same Wi-Fi")
+        print(f"and visit: http://{local_ip}:5000")
+        print("*"*50 + "\n")
+        
         socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)
     except Exception as e:
         print(f"Run Error: {e}")

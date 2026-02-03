@@ -1,53 +1,71 @@
 const socket = io();
 
+// DOM Elements
 const statusText = document.getElementById('status-text');
 const orb = document.getElementById('orb');
 const chatBox = document.getElementById('chat-box');
+const micBtn = document.getElementById('mic-btn');
 
-// Speech Recognition Setup
-window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let isListening = false;
 let recognition;
+
+// --- Web Speech API Setup ---
+window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (window.SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false; // We want to capture single commands when button pressed
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
-        console.log("Voice recognition started. Listening for wake word...");
-    };
-
-    recognition.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-        console.log("Heard:", transcript);
-
-        if (transcript.includes('hi anvi') || transcript.includes('hey anvi') || transcript.includes('hello anvi')) {
-            console.log("Wake word detected via Web!");
-            statusText.innerText = "Wake Word Detected!";
-            socket.emit('wake_up', { message: "Wake word detected from web" });
-            updateOrb('Listening');
-        }
-    };
-
-    recognition.onerror = (event) => {
-        console.error("Speech recognition error", event.error);
+        isListening = true;
+        updateUIState('Listening...');
+        micBtn.classList.add('active');
     };
 
     recognition.onend = () => {
-        // Auto-restart for continuous listening
-        recognition.start();
+        isListening = false;
+        micBtn.classList.remove('active');
+        // Don't reset text immediately so user sees what happened
+        // updateUIState('Ready'); 
     };
 
-    // Start listening immediately
-    recognition.start();
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Recognized:", transcript);
+        addMessage(transcript, 'user');
+
+        // Send to server
+        socket.emit('send_command', { command: transcript });
+        updateUIState('Processing...');
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech Error:", event.error);
+        updateUIState('Error: ' + event.error);
+        isListening = false;
+        micBtn.classList.remove('active');
+    };
 } else {
-    console.warn("Web Speech API not supported in this browser.");
-    addMessage("Web Speech API not supported. Please use Chrome/Edge.", "bot");
+    addMessage("Voice not supported on this browser.", "bot");
+    micBtn.style.display = 'none';
 }
 
+// --- Event Listeners ---
+micBtn.addEventListener('click', () => {
+    if (!recognition) return;
+
+    if (isListening) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
+});
+
+// --- Socket.IO Events ---
 socket.on('connect', () => {
-    statusText.innerText = "Connected to Anvi Core";
+    updateUIState('Connected');
 });
 
 socket.on('status_update', (data) => {
@@ -57,17 +75,25 @@ socket.on('status_update', (data) => {
 
 socket.on('anvi_response', (data) => {
     addMessage(data.data, 'bot');
+    updateUIState('Active');
 });
 
 socket.on('user_message', (data) => {
+    // Message from server-side listening (desktop mic)
     addMessage(data.data, 'user');
 });
 
+// --- UI Functions ---
+function updateUIState(status) {
+    statusText.innerText = status;
+    updateOrb(status);
+}
+
 function updateOrb(status) {
     orb.className = 'orb'; // Reset
-    if (status.includes('Listening')) {
+    if (status.toLowerCase().includes('listening')) {
         orb.classList.add('listening');
-    } else if (status.includes('Active') || status.includes('Speaking')) {
+    } else if (status.toLowerCase().includes('active') || status.toLowerCase().includes('speaking') || status.toLowerCase().includes('processing')) {
         orb.classList.add('active');
     } else {
         orb.classList.add('sleeping');
@@ -77,14 +103,14 @@ function updateOrb(status) {
 function addMessage(text, sender) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', sender);
-    
+
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('msg-content');
     contentDiv.innerText = text;
-    
+
     msgDiv.appendChild(contentDiv);
     chatBox.appendChild(msgDiv);
-    
+
     // Auto scroll
     chatBox.scrollTop = chatBox.scrollHeight;
 }

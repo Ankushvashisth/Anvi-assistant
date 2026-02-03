@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anvi Assistant</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#302b63">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>ANVI</h1>
+            <div id="status-text">Disconnect</div>
+        </div>
+
+        <div class="orb-container">
+            <div id="orb" class="orb"></div>
+        </div>
+
+        <div id="chat-box"></div>
+
+        <div class="controls">
+            <button id="mic-btn" class="btn btn-mic">
+                <span class="material-icons">mic</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
